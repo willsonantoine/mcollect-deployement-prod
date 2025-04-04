@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+.env.local
+.env.development
+.env.production
+.env.test
+node_modules
+build
+dist
+env
+postgres_data/
+logs
+uploads
+.idea
+src/shared/backups
+.qodo
