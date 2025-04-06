@@ -57,55 +57,62 @@ class UserService {
             }
         };
         this.initUser = async () => {
-            const countUser = await this.userModel.count();
-            if (countUser === 0) {
-                const [role] = await this.userRoleModel.findCreateFind({
-                    where: {
-                        name: "SuperAdmin",
-                        description: "Le role SuperAdmin qui tout les privilèges",
-                    },
-                });
-                const member = await this.memberService.create({
-                    id: (0, vars_1.generateUniqueId)(),
-                    number: (0, vars_1.generateUniqueId)(),
-                    type: "Utilisateur",
-                    fullname: "Super Admin",
-                });
-                await this.createUser({
-                    username: "admin",
-                    password: "admin",
-                    roleId: role.id,
-                    memberId: member.id,
-                });
-                const [role2] = await this.userRoleModel.findCreateFind({
-                    where: {
-                        name: "Admin",
-                        description: "Le role Admin est celui qui vien apres le super admin",
-                    },
-                });
-                const [role3] = await this.userRoleModel.findCreateFind({
-                    where: {
-                        name: "User",
-                        description: "C'est l'utilisateur simple",
-                    },
-                });
-            }
-            const countAccessList = await this.accessModel.count();
-            if (countAccessList !== AccessList_1.DefaultAccessList.length) {
-                for (const access of AccessList_1.DefaultAccessList) {
-                    const exist = await this.accessModel.findOne({
-                        where: { name: access.name },
+            try {
+                const countUser = await this.userModel.count();
+                if (countUser === 0) {
+                    const [role] = await this.userRoleModel.findCreateFind({
+                        where: {
+                            name: "SuperAdmin",
+                            description: "Le role SuperAdmin qui tout les privilèges",
+                        },
                     });
-                    if (!exist) {
-                        await this.accessModel.create({
-                            name: access.name,
-                            description: access.nameDescription,
-                            type: access.type,
-                            status: true,
+                    const member = await this.memberService.create({
+                        id: (0, vars_1.generateUniqueId)(),
+                        number: (0, vars_1.generateUniqueId)(),
+                        type: "Utilisateur",
+                        fullname: "Super Admin",
+                    });
+                    await this.createUser({
+                        username: "admin",
+                        password: "admin",
+                        roleId: role.id,
+                        memberId: member.id,
+                    });
+                    const [role2] = await this.userRoleModel.findCreateFind({
+                        where: {
+                            name: "Admin",
+                            description: "Le role Admin est celui qui vien apres le super admin",
+                        },
+                    });
+                    const [role3] = await this.userRoleModel.findCreateFind({
+                        where: {
+                            name: "User",
+                            description: "C'est l'utilisateur simple",
+                        },
+                    });
+                }
+                const countAccessList = await this.accessModel.count();
+                if (countAccessList !== AccessList_1.DefaultAccessList.length) {
+                    for (const access of AccessList_1.DefaultAccessList) {
+                        const exist = await this.accessModel.findOne({
+                            where: { name: access.name },
                         });
-                        console.log(`${access.name} created`);
+                        if (!exist) {
+                            const countAccount = await this.accessModel.count();
+                            await this.accessModel.create({
+                                id: `${countAccount + 1}`,
+                                name: access.name,
+                                description: access.nameDescription,
+                                type: access.type,
+                                status: true,
+                            });
+                            console.log(`${access.name} created`);
+                        }
                     }
                 }
+            }
+            catch (error) {
+                console.log(error);
             }
         };
         this.getAllUsers = async ({ roleId, search, type, status, offset, limit, }) => {
@@ -170,6 +177,7 @@ class UserService {
             // 4. Bulk create the missing access permissions.  Much more efficient than creating them one at a time.
             if (accessToCreate.length > 0) {
                 const newAccessUsers = accessToCreate.map((access) => ({
+                    id: `${accessToCreate.length + 1}`,
                     userId: userId,
                     accessId: access.id,
                     status: true,
